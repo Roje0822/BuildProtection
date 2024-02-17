@@ -1,0 +1,22 @@
+name: BuildProtection
+main: xyz.chide1.buildprotection.BuildProtection
+author: chide1
+
+description: BuildProtection plugin
+
+version: 1.0
+api-version: 1.20
+
+soft-depend:
+  - WorldGuard
+
+commands:
+  건차:
+    aliases:
+      - 건설차단
+      - rjsck
+      - rjstjfckeks
+
+  건차아이템:
+    aliases:
+      - rjsckdkdlxpa

@@ -1,0 +1,54 @@
+region:
+
+  # 대 크기의 건차 반지름
+  bigSizeRadius: 15
+
+  # 중 크기의 건차 반지름
+  normalSizeRadius: 9
+
+  # 소 크기의 건차 반지름
+  smallSizeRadius: 5
+
+  # 대 크기의 건차 높이
+  bigHeight: 20
+
+  # 중 크기의 건차 높이
+  normalHeight: 15
+
+  # 소 크기의 건차 높이
+  smallHeight: 10
+
+  # 권한 부여 최대 인원 제한 (빌더 포함 최소 1명 최대 19명)
+  limitOwner: 19
+
+  # 지역 권한 부여받은 유저가 철문 설치하게 할지
+  isIronDoorPlaceOwner: true
+
+  # 신호기 기능 사용여부
+  beaconTeleport: true
+
+  # 구역 안 설치 금지 여부
+  enablePlaceInRegion: false
+
+  # 구역 안 파괴 금지 여부
+  enableBreakInRegion: false
+
+world:
+  whiteList:
+    - world
+    - world_nether
+
+worldGuard:
+  blackList:
+    - spawn, world
+
+regionLimit:
+  big: 5
+  normal: 5
+  small: 5
+
+regionLocationLimit:
+  min: true
+  max: true
+  minLocation: 100
+  maxLocation: 5000
