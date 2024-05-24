@@ -200,3 +200,6 @@ errorMessages:
 
   # 이미 건차 주인이 해당 플레이어일 경우 (건차 목록)
   alreadyBuilder: "&f이미 %player%님이 건차 주인입니다."
+
+  # 재설치 쿨타임이 지나지 않았을 경우
+  notPassCoolDown: "&f%second%초 후 재설치 할 수 있습니다."

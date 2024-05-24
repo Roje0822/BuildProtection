@@ -3,14 +3,14 @@ package xyz.chide1.buildprotection.listener;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.util.Vector;
-import xyz.chide1.buildprotection.config.ConfigManager;
-import xyz.chide1.buildprotection.config.ConfigType;
+import xyz.chide1.buildprotection.BuildProtection;
 import xyz.chide1.buildprotection.message.MessageManager;
 import xyz.chide1.buildprotection.message.MessageType;
 import xyz.chide1.buildprotection.object.ProtectionRegion;
@@ -25,18 +25,18 @@ public class BlockPlaceListener implements Listener {
     public void onPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
         ProtectionRegionUtil protectionRegionUtil = ProtectionRegionUtil.getInstance();
-        ConfigManager config = ConfigManager.getInstance();
+        FileConfiguration config = BuildProtection.getInstance().getConfig();
         MessageManager message = MessageManager.getInstance();
         Block block = event.getBlock();
 
         for (ProtectionRegion region : BuildProtectionRegionStorage.getProtectionRegions()) {
             if (region.getWorld().equals(event.getBlock().getLocation().getWorld())) {
                 if (BlockBreakListener.getAdminModePlayers().contains(player.getUniqueId())) return;
-                if (block.getLocation().distance(region.getHead()) < 3 * config.getInt(ConfigType.REGION, "bigSizeRadius") && !region.getOwners().contains(player.getUniqueId())) {
+                if (block.getLocation().distance(region.getHead()) < 3 * config.getInt("region.bigSizeRadius") && !region.getOwners().contains(player.getUniqueId())) {
                     List<Vector> vectors = protectionRegionUtil.calculateRegion(region);
                     if (event.getBlock().getType().equals(Material.IRON_DOOR)) {
-                        if (!(region.getBuilder().equals(player.getUniqueId()) || (Boolean.valueOf(config.getMessage(ConfigType.REGION, "isIronDoorPlaceOwner").get())
-                                && region.getOwners().contains(player.getUniqueId())))) {
+                        if (!(region.getBuilder().equals(player.getUniqueId()) || config.getBoolean("region.isIronDoorPlaceOwner")
+                                && region.getOwners().contains(player.getUniqueId()))) {
 
                             for (Vector vector : vectors) {
                                 if (vector.getBlockX() == block.getX() && vector.getBlockY() == block.getY() && vector.getBlockZ() == block.getZ()) {
@@ -51,7 +51,7 @@ public class BlockPlaceListener implements Listener {
 
                     } else {
                         vectors.clear();
-                        if (Boolean.valueOf(config.getMessage(ConfigType.REGION, "enablePlaceInRegion").get()))
+                        if (config.getBoolean("region.enablePlaceInRegion"))
                             vectors = protectionRegionUtil.calculateRegion(region);
                         else vectors = protectionRegionUtil.calculateOutLine(region);
 

@@ -33,6 +33,10 @@ region:
   # 구역 안 파괴 금지 여부
   enableBreakInRegion: false
 
+  # 구역 반환 시 쿨타임
+  # 0 일시 쿨타임 없음
+  coolDown: 40
+
 world:
   whiteList:
     - world

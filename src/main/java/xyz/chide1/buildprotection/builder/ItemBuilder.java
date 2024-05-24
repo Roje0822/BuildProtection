@@ -100,7 +100,10 @@ public class ItemBuilder {
 
     public String getPDC() {
         NamespacedKey key = new NamespacedKey(BuildProtection.getInstance(), "uuid");
-        return meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        if (meta != null) {
+            return meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        }
+        return "";
     }
 
     public ItemStack build() {

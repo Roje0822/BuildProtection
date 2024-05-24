@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -12,8 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
-import xyz.chide1.buildprotection.config.ConfigManager;
-import xyz.chide1.buildprotection.config.ConfigType;
+import xyz.chide1.buildprotection.BuildProtection;
 import xyz.chide1.buildprotection.inventory.page.PaginationHolder;
 import xyz.chide1.buildprotection.object.ProtectionItem;
 import xyz.chide1.buildprotection.object.ProtectionRegion;
@@ -28,27 +28,30 @@ public class ProtectionRegionUtil {
     @Getter
     private static final ProtectionRegionUtil instance = new ProtectionRegionUtil();
 
+    @Getter
+    private static final Map<UUID, Integer> regionCoolDown = new HashMap<>();
+
     private ProtectionRegionUtil() {
     }
 
     public void createRegion(Player player, Location center, RegionSize size) {
-        ConfigManager configManager = ConfigManager.getInstance();
+        FileConfiguration config = BuildProtection.getInstance().getConfig();
         ProtectionItem protectionItem = BuildProtectionItemStorage.getProtectionItem();
         int radius = 0;
         int height = 0;
 
         switch (size) {
             case BIG -> {
-                radius = configManager.getInt(ConfigType.REGION, "bigSizeRadius");
-                height = configManager.getInt(ConfigType.REGION, "bigHeight");
+                radius = config.getInt( "region.bigSizeRadius");
+                height = config.getInt("region.bigHeight");
             }
             case NORMAL -> {
-                radius = configManager.getInt(ConfigType.REGION, "normalSizeRadius");
-                height = configManager.getInt(ConfigType.REGION, "normalHeight");
+                radius = config.getInt("region.normalSizeRadius");
+                height = config.getInt("region.normalHeight");
             }
             case SMALL -> {
-                radius = configManager.getInt(ConfigType.REGION, "smallSizeRadius");
-                height = configManager.getInt(ConfigType.REGION, "smallHeight");
+                radius = config.getInt("region.smallSizeRadius");
+                height = config.getInt("region.smallHeight");
             }
         }
 
@@ -89,22 +92,22 @@ public class ProtectionRegionUtil {
     }
 
     public ProtectionRegion getProtectionRegion(Location center, RegionSize size) {
-        ConfigManager configManager = ConfigManager.getInstance();
+        FileConfiguration config = BuildProtection.getInstance().getConfig();
         int radius = 0;
         int height = 0;
 
         switch (size) {
             case BIG -> {
-                radius = configManager.getInt(ConfigType.REGION, "bigSizeRadius");
-                height = configManager.getInt(ConfigType.REGION, "bigHeight");
+                radius = config.getInt("region.bigSizeRadius");
+                height = config.getInt("region.bigHeight");
             }
             case NORMAL -> {
-                radius = configManager.getInt(ConfigType.REGION, "normalSizeRadius");
-                height = configManager.getInt(ConfigType.REGION, "normalHeight");
+                radius = config.getInt("region.normalSizeRadius");
+                height = config.getInt("region.normalHeight");
             }
             case SMALL -> {
-                radius = configManager.getInt(ConfigType.REGION, "smallSizeRadius");
-                height = configManager.getInt(ConfigType.REGION, "smallHeight");
+                radius = config.getInt("region.smallSizeRadius");
+                height = config.getInt("region.smallHeight");
             }
         }
 
@@ -194,12 +197,12 @@ public class ProtectionRegionUtil {
 
     public boolean isOverLap(ProtectionRegion region) {
         List<Vector> vectors = calculateOutLine(region);
-        ConfigManager config = ConfigManager.getInstance();
+        FileConfiguration config = BuildProtection.getInstance().getConfig();
 
         for (ProtectionRegion protectionRegion : BuildProtectionRegionStorage.getProtectionRegions()) {
             if (region.getWorld().equals(protectionRegion.getWorld())) {
                 List<Vector> vectors1 = calculateOutLine(protectionRegion);
-                if (protectionRegion.getHead().distance(region.getHead()) < 3 * config.getInt(ConfigType.REGION, "bigSizeRadius")) {
+                if (protectionRegion.getHead().distance(region.getHead()) < 3 * config.getInt("region.bigSizeRadius")) {
                     for (Vector vector : vectors) {
                         for (Vector vector1 : vectors1) {
                             if (vector.getBlockX() == vector1.getBlockX() && vector.getBlockY() == vector1.getBlockY() && vector.getBlockZ() == vector1.getBlockZ())
@@ -213,7 +216,7 @@ public class ProtectionRegionUtil {
         return false;
     }
 
-    public void withDrawRegion(ProtectionRegion region) {
+    public void withDrawRegion(Player player, ProtectionRegion region) {
         Player builder = Bukkit.getPlayer(region.getBuilder());
         ItemStack item = switch (region.getSize()) {
             case BIG -> BuildProtectionItemStorage.getProtectionItem().getProtectionBigItem();
@@ -222,6 +225,18 @@ public class ProtectionRegionUtil {
         };
         builder.getInventory().addItem(item);
         deleteRegion(region);
+
+        // 쿨타임 부분
+        FileConfiguration config = BuildProtection.getInstance().getConfig();
+        Bukkit.getScheduler().runTaskTimer(BuildProtection.getInstance(), new Runnable() {
+            int timer = config.getInt("region.coolDown");
+            @Override
+            public void run() {
+                if (timer == -1) return;
+                regionCoolDown.put(player.getUniqueId(), timer);
+                timer--;
+            }
+        }, 0L, 20L);
     }
 
     public void deleteRegion(ProtectionRegion region) {
@@ -239,28 +254,28 @@ public class ProtectionRegionUtil {
     }
 
     public int getRegionLimit(RegionSize size) {
-        ConfigManager config = ConfigManager.getInstance();
-        return config.getInt(ConfigType.REGION_LIMIT, size.name().toLowerCase());
+        FileConfiguration config = BuildProtection.getInstance().getConfig();
+        return config.getInt("regionLimit." + size.name().toLowerCase());
     }
 
     private void setOutLine(RegionSize size, Location center, boolean delete) {
-        ConfigManager configManager = ConfigManager.getInstance();
+        FileConfiguration config = BuildProtection.getInstance().getConfig();
         ProtectionItem protectionItem = BuildProtectionItemStorage.getProtectionItem();
         int radius = 0;
         int height = 0;
 
         switch (size) {
             case BIG -> {
-                radius = configManager.getInt(ConfigType.REGION, "bigSizeRadius");
-                height = configManager.getInt(ConfigType.REGION, "bigHeight");
+                radius = config.getInt("region.bigSizeRadius");
+                height = config.getInt("region.bigHeight");
             }
             case NORMAL -> {
-                radius = configManager.getInt(ConfigType.REGION, "normalSizeRadius");
-                height = configManager.getInt(ConfigType.REGION, "normalHeight");
+                radius = config.getInt("region.normalSizeRadius");
+                height = config.getInt("region.normalHeight");
             }
             case SMALL -> {
-                radius = configManager.getInt(ConfigType.REGION, "smallSizeRadius");
-                height = configManager.getInt(ConfigType.REGION, "smallHeight");
+                radius = config.getInt("region.smallSizeRadius");
+                height = config.getInt("region.smallHeight");
             }
         }
 
@@ -337,9 +352,10 @@ public class ProtectionRegionUtil {
     }
 
     public ProtectionRegion getRegionByLocation(Location location) {
+        FileConfiguration config = BuildProtection.getInstance().getConfig();
         for (ProtectionRegion region : BuildProtectionRegionStorage.getProtectionRegions()) {
             if (region.getWorld().equals(location.getWorld())) {
-                if (region.getHead().distance(region.getHead()) < 2 * ConfigManager.getInstance().getInt(ConfigType.REGION, "bigSizeRadius") + 1) {
+                if (region.getHead().distance(region.getHead()) < 2 * config.getInt("region.bigSizeRadius") + 1) {
                     List<Vector> vectors = calculateRegion(region);
                     for (Vector vector : vectors) {
                         if (location.getBlockX() == vector.getBlockX() && location.getBlockY() == vector.getBlockY() && location.getBlockZ() == vector.getBlockZ()) {

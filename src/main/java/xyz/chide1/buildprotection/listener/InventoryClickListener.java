@@ -4,19 +4,15 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import xyz.chide1.buildprotection.BuildProtection;
 import xyz.chide1.buildprotection.builder.ItemBuilder;
-import xyz.chide1.buildprotection.config.ConfigManager;
-import xyz.chide1.buildprotection.config.ConfigType;
 import xyz.chide1.buildprotection.inventory.InventoryHandler;
 import xyz.chide1.buildprotection.inventory.InventoryType;
 import xyz.chide1.buildprotection.inventory.page.PaginationHolder;
@@ -48,18 +44,18 @@ public class InventoryClickListener implements Listener {
         if (event.getCurrentItem() == null) return;
 
         ProtectionRegionUtil regionUtil = ProtectionRegionUtil.getInstance();
-        ConfigManager config = ConfigManager.getInstance();
+        FileConfiguration config = BuildProtection.getInstance().getConfig();
 
         final int slot = event.getSlot();
         switch (inventoryType) {
             case MENU -> {
                 event.setCancelled(true);
                 if (slot == 4) {
-                    if (region.getBuilder().equals(player.getUniqueId()) && Boolean.valueOf(config.getMessage(ConfigType.REGION, "beaconTeleport").get())) {
+                    if (region.getBuilder().equals(player.getUniqueId()) && config.getBoolean("region.beaconTeleport")) {
                         if (!event.getClick().equals(ClickType.LEFT)) return;
                         switch (region.getSize()) {
                             case BIG -> {
-                                if (config.getInt(ConfigType.REGION_LIMIT, "big") > 5
+                                if (config.getInt("regionLimit.big") > 5
                                     || BuildProtectionRegionStorage.getRegionBySize(player.getUniqueId(), RegionSize.BIG).size() > 5)
                                 {
                                     content.getMessageAfterPrefix(MessageType.ERROR, "overLapProtectionAmount").ifPresent(message -> {
@@ -70,7 +66,7 @@ public class InventoryClickListener implements Listener {
                                 }
                             }
                             case NORMAL -> {
-                                if (config.getInt(ConfigType.REGION_LIMIT, "normal") > 5
+                                if (config.getInt("regionLimit.normal") > 5
                                         || BuildProtectionRegionStorage.getRegionBySize(player.getUniqueId(), RegionSize.NORMAL).size() > 5)
                                 {
                                     content.getMessageAfterPrefix(MessageType.ERROR, "overLapProtectionAmount").ifPresent(message -> {
@@ -81,7 +77,7 @@ public class InventoryClickListener implements Listener {
                                 }
                             }
                             case SMALL -> {
-                                if (config.getInt(ConfigType.REGION_LIMIT, "small") > 5
+                                if (config.getInt("regionLimit.small") > 5
                                         || BuildProtectionRegionStorage.getRegionBySize(player.getUniqueId(), RegionSize.SMALL).size() > 5)
                                 {
                                     content.getMessageAfterPrefix(MessageType.ERROR, "overLapProtectionAmount").ifPresent(message -> {
@@ -97,6 +93,7 @@ public class InventoryClickListener implements Listener {
                     }
                 }
                 else if (slot > 8 && slot < 27) {
+                    if (event.getCurrentItem() == null) return;
                     List<UUID> owners = new ArrayList<>();
                     owners.addAll(region.getOwners());
                     owners.remove(player.getUniqueId());
@@ -149,7 +146,6 @@ public class InventoryClickListener implements Listener {
 
             case ADD_PERMISSION_MENU -> {
                 event.setCancelled(true);
-                ConfigManager configManager = ConfigManager.getInstance();
 
                 if (event.getSlot() == 45) {
                     content.getMessageAfterPrefix(MessageType.ERROR, "nonExistPrevPage").ifPresent(player::sendMessage);
@@ -163,7 +159,7 @@ public class InventoryClickListener implements Listener {
 
                 if (!event.getCurrentItem().getType().equals(Material.PLAYER_HEAD)) return;
                 player.playSound(player, Sound.UI_BUTTON_CLICK, 1, 2);
-                if (region.getOwners().size() >= configManager.getInt(ConfigType.REGION, "limitOwner")) {
+                if (region.getOwners().size() >= config.getInt("region.limitOwner")) {
                     content.getMessageAfterPrefix(MessageType.ERROR, "limitOwner").ifPresent(player::sendMessage);
                     return;
                 }
@@ -207,7 +203,7 @@ public class InventoryClickListener implements Listener {
                         return;
                     }
 
-                    regionUtil.withDrawRegion(region);
+                    regionUtil.withDrawRegion(player, region);
                     player.closeInventory();
                     content.getMessageAfterPrefix(MessageType.NORMAL, "withDrawBuildProjection").ifPresent(player::sendMessage);
                     player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 1, 2);

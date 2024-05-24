@@ -8,16 +8,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import xyz.chide1.buildprotection.BuildProtection;
-import xyz.chide1.buildprotection.config.ConfigManager;
-import xyz.chide1.buildprotection.config.ConfigType;
 import xyz.chide1.buildprotection.inventory.InventoryHandler;
 import xyz.chide1.buildprotection.listener.BlockBreakListener;
 import xyz.chide1.buildprotection.listener.PlayerChatListener;
 import xyz.chide1.buildprotection.message.MessageManager;
 import xyz.chide1.buildprotection.message.MessageType;
-import xyz.chide1.buildprotection.object.ProtectionRegion;
-import xyz.chide1.buildprotection.storage.BuildProtectionRegionStorage;
-import xyz.chide1.buildprotection.util.ProtectionRegionUtil;
 
 import java.io.File;
 import java.util.List;
@@ -28,7 +23,6 @@ public class BuildProtectionCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
         MessageManager message = MessageManager.getInstance();
-        ConfigManager config = ConfigManager.getInstance();
 
         if (!(sender instanceof Player player)) {
             message.getMessageAfterPrefix(MessageType.ERROR, "noConsoleCommand").ifPresent(sender::sendMessage);
@@ -64,11 +58,9 @@ public class BuildProtectionCommand implements CommandExecutor {
             case "리로드" -> {
                 message.initialize(YamlConfiguration.loadConfiguration(new File(
                         BuildProtection.getInstance().getDataFolder(), "messages.yml")));
-                BuildProtection.getInstance().saveDefaultConfig();
-                config.initialize(BuildProtection.getInstance().getConfig());
+                BuildProtection.getInstance().reloadConfig();
 
                 message.getMessageAfterPrefix(MessageType.NORMAL, "reloadConfig").ifPresent(Bukkit::broadcastMessage);
-                config.getMessage(ConfigType.REGION_LOCATION_LIMIT, "min").ifPresent(player::sendMessage);
                 return true;
             }
 
